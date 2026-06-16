@@ -14,7 +14,7 @@ A modern, real-time weather application built with React, TypeScript, and Vite. 
 - **City search** — Search for any city worldwide with autocomplete, recent search history, and favorites
 - **Favorite cities** — Save and quickly access your favorite locations
 - **Dark / Light theme** — Fully themed UI with a persistent theme toggle
-- **Fully responsive** — Works on mobile, tablet, and desktop
+- **AI Weather Insights** — Powered by Gemini 2.5 Flash, generates friendly and practical weather summaries with clothing and activity recommendations
 
 ---
 
@@ -32,6 +32,7 @@ A modern, real-time weather application built with React, TypeScript, and Vite. 
 | Icons | Lucide React |
 | Date Formatting | date-fns |
 | Notifications | Sonner |
+| AI Insights | Google Gemini 2.5 Flash |
 
 ---
 
@@ -44,6 +45,7 @@ All APIs are **free and require no API key**.
 | [Open-Meteo](https://open-meteo.com/) | Current weather & 5-day hourly forecast |
 | [Open-Meteo Geocoding](https://open-meteo.com/en/docs/geocoding-api) | City search by name |
 | [BigDataCloud](https://www.bigdatacloud.com/free-api/free-reverse-geocode-to-city-api) | Reverse geocoding (lat/lon → city name) |
+| [Google Gemini API](https://ai.google.dev/) | AI-generated weather insights (requires API key) |
 
 ---
 
@@ -54,7 +56,8 @@ src/
 ├── api/
 │   ├── config.tsx          # API base URLs
 │   ├── types.tsx           # TypeScript interfaces
-│   └── weather.tsx         # API class (weather, forecast, geocoding)
+│   ├── weather.tsx         # API class (weather, forecast, geocoding)
+│   └── gemini.ts           # Gemini AI insights integration
 ├── components/
 │   ├── ui/                 # shadcn/ui base components
 │   ├── current-weather.tsx # Current conditions card
@@ -67,6 +70,7 @@ src/
 │   ├── header.tsx          # App header with search & theme toggle
 │   ├── layout.tsx          # Page layout wrapper
 │   ├── loading-skeleton.tsx # Loading state UI
+│   ├── weather-insights.tsx # AI-generated weather insights card
 │   └── theme-toggle.tsx    # Dark/light mode toggle
 ├── context/
 │   └── theme-provider.tsx  # Global theme context
@@ -168,6 +172,42 @@ React Query is configured with:
 - `staleTime: 5 minutes` — data is considered fresh for 5 minutes
 - `gcTime: 10 minutes` — cached data is garbage collected after 10 minutes
 - `refetchOnWindowFocus: false` — no automatic refetch when switching tabs
+
+---
+
+## 🤖 Gemini AI Integration
+
+### Overview
+Weather AI uses the Google Gemini 2.5 Flash model to transform raw weather data into human-friendly insights. After fetching conditions from Open-Meteo, the data is sent to Gemini which returns a conversational 3-4 sentence summary with practical advice.
+
+### Data Flow
+```
+Open-Meteo API (weather + forecast)
+        ↓
+  gemini.ts — builds structured prompt
+        ↓
+  Gemini 2.5 Flash — generates insight
+        ↓
+  WeatherInsights component — displays text
+```
+
+### What Gemini generates
+Given current conditions and a 24-hour forecast, Gemini produces insights like:
+> *"It's a warm and humid afternoon at 26°C in Nairobi. With light rain showers expected this evening, it's a good idea to carry an umbrella. Opt for light breathable clothing and keep a jacket handy for when temperatures dip later tonight."*
+
+### Setup
+1. Get a free API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Create a `.env.local` file in the project root:
+```
+VITE_GEMINI_API_KEY=your_api_key_here
+```
+3. For production, add `VITE_GEMINI_API_KEY` to your Vercel environment variables
+
+> **Note:** Never commit your `.env.local` file. It is already covered by `.gitignore`.
+
+### Architecture
+- `src/api/gemini.ts` — single responsibility: builds the prompt and calls the Gemini API
+- `src/components/weather-insights.tsx` — React Query powered component with loading skeleton, error handling, and 30-minute cache to avoid unnecessary API calls
 
 ---
 
